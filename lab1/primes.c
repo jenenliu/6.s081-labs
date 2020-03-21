@@ -12,22 +12,26 @@ main()
   int n;
   pipe(first_pipe_fd);
 
-  if (fork() == 0) {
+  if (fork() > 0) {
     /* process in child */
-
+    close(first_pipe_fd[0]);
     for (int i = 0; i < 34; i++) {
       write(first_pipe_fd[1], &numbers[i], 4);
     }
-    close(first_pipe_fd[1]);
-    printf("wait child here\n");
-    exit();
+    wait();
   } else {
+      close(first_pipe_fd[1]);
+      int my_prime = 0;
       while((n = read(first_pipe_fd[0], &buf, sizeof buf)) > 0) {
-          printf("received %d\n", buf);
+          if (my_prime == 0) {
+              my_prime = buf;
+          } else if (my_prime == buf) {
+              printf("prime %d\n", buf);
+          } else if (buf % my_prime != 0) {
+              fork();
+          }
       }
-      printf("wait here\n");
-      close(first_pipe_fd[0]);
-      wait();
+      exit();
   }
   exit();
 }
